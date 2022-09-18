@@ -1,6 +1,6 @@
 ![test workflow](https://github.com/reachfh/spandex_tesla/actions/workflows/test.yml/badge.svg)
 
-# SpandexTesla
+# Tesla.Middleware.Spandex
 
 Middleware for the [Tesla](https://hexdocs.pm/tesla/readme.html) HTTP client
 library that creates spans using the [Spandex](https://hex.pm/packages/spandex)
