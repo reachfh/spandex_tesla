@@ -41,6 +41,7 @@ defmodule Tesla.Middleware.Spandex do
     span_opts = env.opts[:span_opts] || []
 
     tracer.start_span("http.request", span_opts)
+
     try do
       env
       |> Tesla.put_headers(tracer.inject_context([]))
@@ -92,7 +93,6 @@ defmodule Tesla.Middleware.Spandex do
       query: query
     } = env
 
-
     full_url = Tesla.build_url(url, query)
     uri = URI.parse(full_url)
 
@@ -110,7 +110,7 @@ defmodule Tesla.Middleware.Spandex do
         query_string: URI.encode_query(query),
         host: uri.host,
         port: uri.port,
-        scheme: uri.scheme,
+        scheme: uri.scheme
       ],
       type: :web,
       resource: "#{method} #{path}",

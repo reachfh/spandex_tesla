@@ -19,27 +19,26 @@ defmodule SpandexTeslaTest do
       }
 
       assert [
-        http: [
-          status_code: 200,
-          method: "GET",
-          url: "https://www.example.com/api",
-          path: "/api",
-          query_string: "param=value",
-          host: "www.example.com",
-          port: 443,
-          scheme: "https"
-        ],
-        type: :web,
-        resource: "GET /api",
-        tags: [
-          span: [kind: "client"]
-        ]
-      ] = Tesla.Middleware.Spandex.get_span_opts(env)
+               http: [
+                 status_code: 200,
+                 method: "GET",
+                 url: "https://www.example.com/api",
+                 path: "/api",
+                 query_string: "param=value",
+                 host: "www.example.com",
+                 port: 443,
+                 scheme: "https"
+               ],
+               type: :web,
+               resource: "GET /api",
+               tags: [
+                 span: [kind: "client"]
+               ]
+             ] = Tesla.Middleware.Spandex.get_span_opts(env)
     end
   end
 
   test "records a ", %{bypass: bypass} do
-
     defmodule TestClient do
       def get(client) do
         params = [id: '3']
@@ -52,7 +51,7 @@ defmodule SpandexTeslaTest do
           {Tesla.Middleware.BaseUrl, url},
           {Tesla.Middleware.Spandex, tracer: SpandexTesla.Tracer},
           Tesla.Middleware.PathParams,
-          {Tesla.Middleware.Logger, debug: false},
+          {Tesla.Middleware.Logger, debug: false}
         ]
 
         Tesla.client(middleware)
@@ -63,7 +62,7 @@ defmodule SpandexTeslaTest do
       Plug.Conn.resp(conn, 204, "")
     end)
 
-    SpandexTesla.Tracer.trace("top") do
+    SpandexTesla.Tracer.trace "top" do
       bypass.port
       |> endpoint_url()
       |> TestClient.client()
