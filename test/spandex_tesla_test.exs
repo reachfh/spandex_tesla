@@ -18,7 +18,7 @@ defmodule SpandexTeslaTest do
         query: [{"param", "value"}]
       }
 
-      expected = [
+      assert [
         http: [
           status_code: 200,
           method: "GET",
@@ -34,10 +34,7 @@ defmodule SpandexTeslaTest do
         tags: [
           span: [kind: "client"]
         ]
-      ]
-
-      result = Tesla.Middleware.Spandex.get_span_opts(env)
-      assert ^expected = result
+      ] = Tesla.Middleware.Spandex.get_span_opts(env)
     end
   end
 
@@ -54,7 +51,8 @@ defmodule SpandexTeslaTest do
         middleware = [
           {Tesla.Middleware.BaseUrl, url},
           {Tesla.Middleware.Spandex, tracer: SpandexTesla.Tracer},
-          Tesla.Middleware.PathParams
+          Tesla.Middleware.PathParams,
+          {Tesla.Middleware.Logger, debug: false},
         ]
 
         Tesla.client(middleware)
@@ -72,34 +70,17 @@ defmodule SpandexTeslaTest do
       |> TestClient.get()
     end
 
-    assert_receive {:sent_trace, ""}
-
-    # assert_receive {:sent_trace,
-    #   %Spandex.Trace{
-    #     spans: [
-    #       %Spandex.Span{
-    #         http: nil,
-    #         name: "phx.router_dispatch",
-    #         resource: "get /prismic/personalization_traits",
-    #         service: :api,
-    #         type: :web
-    #       },
-    #       %Spandex.Span{
-    #         http: [
-    #           method: "GET",
-    #           query_string: "",
-    #           status_code: 200,
-    #           url: "/prismic/personalization_traits",
-    #           user_agent: nil
-    #         ],
-    #         name: "request",
-    #         resource: "get /prismic/personalization_traits",
-    #         service: :api,
-    #         type: :web
-    #       }
-    #     ]
-    #   }}
-
+    span = Spandex.Test.Util.find_span("http.request")
+    assert span.http[:status_code] == 204
+    assert span.http[:method] == "GET"
+    assert span.http[:path] == "/users/3"
+    assert span.http[:route] == "/users/:id"
+    assert span.http[:host] == "localhost"
+    assert span.http[:scheme] == "http"
+    assert span.resource == "GET /users/3"
+    assert span.service == :spandex_tesla
+    assert span.tags == [span: [kind: "client"]]
+    assert span.type == :web
   end
 
   defp endpoint_url(port), do: "http://localhost:#{port}/"

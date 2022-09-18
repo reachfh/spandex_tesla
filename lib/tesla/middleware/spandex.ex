@@ -22,24 +22,29 @@ defmodule Tesla.Middleware.Spandex do
   ### Options
 
   - `:tracer` - Application's Spandex.Tracer module
+
+  This can also be set in the application config:
+
+    config :spandex_tesla,
+      tracer: SpandexTesla.Tracer
+
   - `:span_opts` - Options for Spandex.start_span/2 and Spandex.span_error/2
   """
   @behaviour Tesla.Middleware
-
-  require Logger
 
   @impl true
   def call(env, next, options) do
     # span_name = get_span_name(env)
     {tracer, env} = ensure_tracer(env, options)
-
-    span_opts = DeepMerge.deep_merge(get_span_opts(env), env.opts[:span_opts] || [])
+    span_opts = env.opts[:span_opts] || []
 
     tracer.start_span("http.request", span_opts)
     try do
       env
       |> Tesla.put_headers(tracer.inject_context([]))
+      |> handle_path_params(tracer)
       |> Tesla.run(next)
+      |> set_span_opts(tracer)
       |> add_content_length(tracer)
       |> handle_result(tracer)
     rescue
@@ -58,10 +63,10 @@ defmodule Tesla.Middleware.Spandex do
       tracer = env.opts[:tracer] ->
         {tracer, env}
 
-      tracer = options[:tracer] ->
+      tracer = Application.get_env(:spandex_tesla, :tracer) ->
         {tracer, Tesla.put_opt(env, :tracer, tracer)}
 
-      tracer = Application.get_env(:spandex_tesla, :tracer) ->
+      tracer = options[:tracer] ->
         {tracer, Tesla.put_opt(env, :tracer, tracer)}
 
       true ->
@@ -69,22 +74,13 @@ defmodule Tesla.Middleware.Spandex do
     end
   end
 
-  # defp get_span_name(env) do
-  #   case env.opts[:path_params] do
-  #     nil ->
-  #       "HTTP #{format_http_method(env.method)}"
-  #
-  #     _ ->
-  #       URI.parse(env.url).path
-  #   end
-  # end
+  @spec set_span_opts(Tesla.Env.result(), Module.t()) :: Keyword.t()
+  defp set_span_opts({_, %Tesla.Env{} = env} = result, tracer) do
+    span_opts = DeepMerge.deep_merge(get_span_opts(env), env.opts[:span_opts] || [])
+    tracer.update_span(span_opts)
+    result
+  end
 
-  # defp set_span_opts({_, %Tesla.Env{} = env} = result, tracer) do
-  #   tracer.update_span([tags: get_span_opts(env)])
-  #   result
-  # end
-
-  @spec get_span_opts(Tesla.Env.t()) :: Keyword.t()
   def get_span_opts(env) do
     %Tesla.Env{
       method: method,
@@ -93,6 +89,7 @@ defmodule Tesla.Middleware.Spandex do
       # headers: headers,
       query: query
     } = env
+
 
     full_url = Tesla.build_url(url, query)
     uri = URI.parse(full_url)
@@ -119,19 +116,25 @@ defmodule Tesla.Middleware.Spandex do
         span: [kind: "client"]
       ]
     ]
-    |> maybe_add_route(env)
   end
 
-  # Path template, e.g. /users/:user_id
-  # set when using Tesla.Middleware.PathParams
-  @spec maybe_add_route(Keyword.t(), Tesla.Env.t()) :: Keyword.t()
-  defp maybe_add_route(opts, env) do
+  # With Tesla.Middleware.PathParams, the path is initially a template,
+  # e.g. /users/:user_id, then expanded to the final version.
+  @spec handle_path_params(Tesla.Env.t(), Module.t()) :: Tesla.Env.t()
+  defp handle_path_params(env, tracer) do
     case Keyword.fetch(env.opts, :path_params) do
       {:ok, _} ->
-        put_in(opts, [:http, :route], get_in(opts, [:http, :path]))
+        %Tesla.Env{url: url, query: query} = env
+        full_url = Tesla.build_url(url, query)
+        uri = URI.parse(full_url)
+        path = uri.path || "/"
+        # Maybe set resource as well here
+
+        tracer.update_span(http: [route: path])
+        env
 
       :error ->
-        opts
+        env
     end
   end
 
@@ -145,7 +148,7 @@ defmodule Tesla.Middleware.Spandex do
         result
     end
   end
-,
+
   defp add_content_length(result, _tracer) do
     result
   end

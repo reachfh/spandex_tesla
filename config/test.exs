@@ -4,11 +4,21 @@ config :logger,
   level: :debug
 
 config :logger, :console,
+  level: :debug,
   format: "$time $metadata[$level] $message\n",
-  metadata: [:file, :line]
+  metadata: [:mfa]
+
+config :spandex_tesla,
+  tracer: SpandexTesla.Tracer
 
 config :spandex_tesla, SpandexTesla.Tracer,
-  service: :myapi,
-  adapter: SpandexDatadog.Adapter,
+  service: :spandex_tesla,
+  adapter: Spandex.TestAdapter,
+  sender: Spandex.TestSender,
   disabled?: false,
+  resource: "default",
   env: "test"
+
+config :tesla, Tesla.Middleware.Logger,
+  # format: "$method $url ====> $status / time=$time",
+  debug: true
