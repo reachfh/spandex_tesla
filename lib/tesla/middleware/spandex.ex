@@ -155,14 +155,10 @@ defmodule Tesla.Middleware.Spandex do
     result
   end
 
+  @spec handle_result(Tesla.Env.result(), module()) :: Tesla.Env.result()
   defp handle_result({:ok, %Tesla.Env{status: status} = env}, tracer) when status > 400 do
     tracer.update_span(error: [error?: true])
     {:ok, env}
-  end
-
-  defp handle_result({:error, {Tesla.Middleware.FollowRedirects, :too_many_redirects}} = result, tracer) do
-    tracer.update_span(error: [error?: true])
-    result
   end
 
   defp handle_result({:ok, env}, _tracer) do
