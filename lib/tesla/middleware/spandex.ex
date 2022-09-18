@@ -5,6 +5,10 @@ defmodule Tesla.Middleware.Spandex do
   Uses the [Spandex](https://hex.pm/packages/spandex)
   tracing library, which suports Datadog.
 
+  Sets the attributes on the span based on Datadog conventions:
+
+  https://docs.datadoghq.com/tracing/trace_collection/tracing_naming_convention/
+
   ### Examples
 
   ```
@@ -18,36 +22,53 @@ defmodule Tesla.Middleware.Spandex do
   ### Options
 
   - `:tracer` - Application's Spandex.Tracer module
+  - `:span_opts` - Options for Spandex.start_span/2 and Spandex.span_error/2
   """
   @behaviour Tesla.Middleware
+
+  require Logger
 
   @impl true
   def call(env, next, options) do
     # span_name = get_span_name(env)
     {tracer, env} = ensure_tracer(env, options)
 
-    tracer.span("http.request") do
+    span_opts = DeepMerge.deep_merge(get_span_opts(env), env.opts[:span_opts] || [])
+
+    tracer.start_span("http.request", span_opts)
+    try do
       env
       |> Tesla.put_headers(tracer.inject_context([]))
       |> Tesla.run(next)
-      |> set_span_attrs()
+      |> add_content_length(tracer)
       |> handle_result(tracer)
+    rescue
+      exception ->
+        stacktrace = __STACKTRACE__
+        tracer.span_error(exception, stacktrace, span_opts)
+        reraise exception, stacktrace
+    after
+      tracer.finish_span()
     end
   end
 
   @spec ensure_tracer(Tesla.Env.t(), Keyword.t()) :: {any(), Tesla.Env.t()}
-  defp ensure_tracer(env, options) do
-    case Keyword.fetch(env.opts, :tracer) do
-      {:ok, tracer} ->
+  def ensure_tracer(env, options) do
+    cond do
+      tracer = env.opts[:tracer] ->
         {tracer, env}
 
-      :error ->
-        tracer = Keyword.fetch(options, :tracer)
+      tracer = options[:tracer] ->
         {tracer, Tesla.put_opt(env, :tracer, tracer)}
+
+      tracer = Application.get_env(:spandex_tesla, :tracer) ->
+        {tracer, Tesla.put_opt(env, :tracer, tracer)}
+
+      true ->
+        raise "No tracer defined"
     end
   end
 
-  # @spec get_span_name(Tesla.Env.t()) :: String.t()
   # defp get_span_name(env) do
   #   case env.opts[:path_params] do
   #     nil ->
@@ -58,64 +79,84 @@ defmodule Tesla.Middleware.Spandex do
   #   end
   # end
 
-  defp set_span_attrs({_, %Tesla.Env{} = env} = result) do
-    tracer = env.opts[:tracer]
-    tracer.update_span(get_attrs(env))
-    result
-  end
+  # defp set_span_opts({_, %Tesla.Env{} = env} = result, tracer) do
+  #   tracer.update_span([tags: get_span_opts(env)])
+  #   result
+  # end
 
-  @spec get_attrs(Tesla.Env.t()) :: Keyword.t()
-  defp get_attrs(env) do
+  @spec get_span_opts(Tesla.Env.t()) :: Keyword.t()
+  def get_span_opts(env) do
     %Tesla.Env{
       method: method,
       url: url,
       status: status_code,
-      headers: headers,
+      # headers: headers,
       query: query
     } = env
 
-    url = Tesla.build_url(url, query)
-    uri = URI.parse(url)
+    full_url = Tesla.build_url(url, query)
+    uri = URI.parse(full_url)
 
     method = format_http_method(method)
+    path = uri.path || "/"
 
+    # These tags come mostly from Spandex.Span, but also includes tags from
     # https://docs.datadoghq.com/tracing/trace_collection/tracing_naming_convention/
     [
-      {:"span.kind", "client"},
-      {:service, uri.host},
-      {:resource, "#{method} #{url}"},
-
-      {:"http.status_code", status_code},
-      {:"http.url", url},
-      {:"http.method", method},
-      # http.version
-      # http.route # path template, e.g. /users/:user_id
-      {:"http.target", uri.path},
-      {:"http.host", uri.host},
-      {:"http.scheme", uri.scheme}
-      # http.request.content_length
-      # http.response.content_length
+      http: [
+        status_code: status_code,
+        method: method,
+        url: url,
+        path: path,
+        query_string: URI.encode_query(query),
+        host: uri.host,
+        port: uri.port,
+        scheme: uri.scheme,
+      ],
+      type: :web,
+      resource: "#{method} #{path}",
+      tags: [
+        span: [kind: "client"]
+      ]
     ]
-    |> maybe_add_content_length(headers)
+    |> maybe_add_route(env)
   end
 
-  defp maybe_add_content_length(attrs, headers) do
-    case Enum.find(headers, fn {k, _v} -> k == "content-length" end) do
-      nil ->
-        attrs
+  # Path template, e.g. /users/:user_id
+  # set when using Tesla.Middleware.PathParams
+  @spec maybe_add_route(Keyword.t(), Tesla.Env.t()) :: Keyword.t()
+  defp maybe_add_route(opts, env) do
+    case Keyword.fetch(env.opts, :path_params) do
+      {:ok, _} ->
+        put_in(opts, [:http, :route], get_in(opts, [:http, :path]))
 
-      {_key, content_length} ->
-        Keyword.put(attrs, :"http.response_content_length", content_length)
+      :error ->
+        opts
     end
   end
 
+  defp add_content_length({:ok, %Tesla.Env{headers: headers}} = result, tracer) do
+    case Enum.find(headers, fn {k, _v} -> k == "content-length" end) do
+      nil ->
+        result
+
+      {_key, content_length} ->
+        tracer.update_span(tags: [{:"http.response.content_length", content_length}])
+        result
+    end
+  end
+,
+  defp add_content_length(result, _tracer) do
+    result
+  end
+
   defp handle_result({:ok, %Tesla.Env{status: status} = env}, tracer) when status > 400 do
-    tracer.update_span([:error, error?: true])
+    tracer.update_span(error: [error?: true])
     {:ok, env}
   end
 
   defp handle_result({:error, {Tesla.Middleware.FollowRedirects, :too_many_redirects}} = result, tracer) do
-    tracer.update_span([:error, error?: true])
+    tracer.update_span(error: [error?: true])
     result
   end
 
@@ -124,7 +165,7 @@ defmodule Tesla.Middleware.Spandex do
   end
 
   defp handle_result(result, tracer) do
-    tracer.update_span([:error, error?: true])
+    tracer.update_span(error: [error?: true])
     result
   end
 
