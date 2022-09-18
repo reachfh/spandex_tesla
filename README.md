@@ -1,4 +1,4 @@
-![tests](https://github.com/reachfh/spandex_tesla/actions/workflows/test.yml/badge.svg)
+![test workflow](https://github.com/reachfh/spandex_tesla/actions/workflows/test.yml/badge.svg)
 
 # SpandexTesla
 
