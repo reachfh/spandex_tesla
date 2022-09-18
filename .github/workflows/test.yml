@@ -1,0 +1,22 @@
+---
+on:
+  push:
+    branches:
+      - "main"
+  pull_request:
+name: Test
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: Tests
+    env:
+      MIX_ENV: test
+    steps:
+      - uses: actions/checkout@v2
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: "24.2"
+          elixir-version: "1.13.4"
+
+      - run: mix deps.get
+      - run: mix test
