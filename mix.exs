@@ -56,7 +56,7 @@ defmodule SpandexTesla.MixProject do
       {:hackney, "~> 1.18", only: [:dev, :test]},
       {:jason, "~> 1.3"},
       {:spandex, "~> 3.1"},
-      {:spandex_datadog, "~> 1.2"},
+      # {:spandex_datadog, "~> 1.2"},
       {:tesla, "~> 1.4"},
     ]
   end
