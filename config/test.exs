@@ -1,10 +1,10 @@
 import Config
 
 config :logger,
-  level: :debug
+  level: :warning
 
 config :logger, :console,
-  level: :debug,
+  level: :warning,
   format: "$time $metadata[$level] $message\n",
   metadata: [:mfa]
 
