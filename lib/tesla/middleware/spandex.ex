@@ -32,6 +32,8 @@ defmodule Tesla.Middleware.Spandex do
   """
   @behaviour Tesla.Middleware
 
+  @type tesla_result() :: {any(), Tesla.Env.t()}
+
   @impl true
   def call(env, next, options) do
     # span_name = get_span_name(env)
@@ -74,7 +76,7 @@ defmodule Tesla.Middleware.Spandex do
     end
   end
 
-  @spec set_span_opts(Tesla.Env.result(), Module.t()) :: Keyword.t()
+  @spec set_span_opts(tesla_result(), module()) :: tesla_result()
   defp set_span_opts({_, %Tesla.Env{} = env} = result, tracer) do
     span_opts = DeepMerge.deep_merge(get_span_opts(env), env.opts[:span_opts] || [])
     tracer.update_span(span_opts)
@@ -120,7 +122,7 @@ defmodule Tesla.Middleware.Spandex do
 
   # With Tesla.Middleware.PathParams, the path is initially a template,
   # e.g. /users/:user_id, then expanded to the final version.
-  @spec handle_path_params(Tesla.Env.t(), Module.t()) :: Tesla.Env.t()
+  @spec handle_path_params(Tesla.Env.t(), module()) :: Tesla.Env.t()
   defp handle_path_params(env, tracer) do
     case Keyword.fetch(env.opts, :path_params) do
       {:ok, _} ->
