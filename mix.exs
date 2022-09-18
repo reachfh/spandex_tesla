@@ -23,7 +23,7 @@ defmodule SpandexTesla.MixProject do
         "coveralls.html": :test
       ],
       dialyzer: [
-        plt_add_apps: [:mix],
+        plt_add_apps: [:mix]
       ],
       deps: deps()
     ]
@@ -37,11 +37,11 @@ defmodule SpandexTesla.MixProject do
   end
 
   defp extra_applications(:test), do: [:hackney]
-  defp extra_applications(_),     do: []
+  defp extra_applications(_), do: []
 
   # Specifies which paths to compile per environment
   defp elixirc_paths(:test), do: ["lib", "test/support"]
-  defp elixirc_paths(_),     do: ["lib"]
+  defp elixirc_paths(_), do: ["lib"]
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
@@ -57,7 +57,7 @@ defmodule SpandexTesla.MixProject do
       {:jason, "~> 1.3"},
       {:spandex, "~> 3.1"},
       # {:spandex_datadog, "~> 1.2"},
-      {:tesla, "~> 1.4"},
+      {:tesla, "~> 1.4"}
     ]
   end
 
@@ -73,7 +73,7 @@ defmodule SpandexTesla.MixProject do
       links: %{
         "GitHub" => @github,
         "Tesla" => "https://github.com/elixir-tesla/tesla",
-        "Spandex"=> "https://github.com/spandex-project/spandex"
+        "Spandex" => "https://github.com/spandex-project/spandex"
       }
     ]
   end
@@ -83,7 +83,7 @@ defmodule SpandexTesla.MixProject do
       source_url: @github,
       extras: ["README.md", "CHANGELOG.md"],
       # api_reference: false,
-      source_url_pattern: "#{@github}/blob/master/%{path}#L%{line}",
+      source_url_pattern: "#{@github}/blob/master/%{path}#L%{line}"
     ]
   end
 end
