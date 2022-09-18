@@ -1,3 +1,5 @@
+![tests](https://github.com/reachfh/spandex_tesla/actions/workflows/test.yml/badge.svg)
+
 # SpandexTesla
 
 Middleware for the [Tesla](https://hexdocs.pm/tesla/readme.html) HTTP client
