@@ -56,4 +56,5 @@ jobs:
       - name: Run static code analysis tools
         run: | 
           mix credo
+          mix deps.audit
           mix dialyzer --format github
