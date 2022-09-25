@@ -53,8 +53,8 @@ defmodule Tesla.Middleware.Spandex do
         tracer.span_error(exception, stacktrace, span_opts)
         reraise exception, stacktrace
     else
-        {:ok, env} = result ->
-          span_opts = DeepMerge.deep_merge(get_span_opts(env), env.opts[:span_opts] || [])
+        {:ok, new_env} = result ->
+          span_opts = DeepMerge.deep_merge(get_span_opts(new_env), env.opts[:span_opts] || [])
           tracer.update_span(span_opts)
 
           result
