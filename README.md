@@ -11,7 +11,7 @@ It creates a span for the client HTTP call, setting metadata:
 
 ```elixir
 [
-    http: [
+  http: [
     status_code: status_code,
     method: method,
     url: url,
@@ -20,12 +20,12 @@ It creates a span for the client HTTP call, setting metadata:
     host: uri.host,
     port: uri.port,
     scheme: uri.scheme,
-    ],
-    type: :web,
-    resource: "#{method} #{path}",
-    tags: [
+  ],
+  type: :web,
+  resource: "#{method} #{path}",
+  tags: [
     span: [kind: "client"]
-    ]
+  ]
 ]
 ```
 See https://docs.datadoghq.com/tracing/trace_collection/tracing_naming_convention/
