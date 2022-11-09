@@ -1,14 +1,18 @@
 ---
+name: Test
 on:
   push:
     branches:
       - "main"
   pull_request:
-name: Test
 jobs:
   test:
     name: Run tests
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        otp: ['24.2', '25.0']
+        elixir: ['1.13.4', '1.14.0']
 
     env:
       MIX_ENV: test
@@ -25,8 +29,8 @@ jobs:
       - name: Install Elixir
         uses: erlef/setup-beam@v1
         with:
-          otp-version: "24.2"
-          elixir-version: "1.13.4"
+          otp-version: ${{matrix.otp}}
+          elixir-version: ${{matrix.elixir}}
 
       - name: Check formatting
         run: mix format --check-formatted
