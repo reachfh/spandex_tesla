@@ -3,8 +3,32 @@
 # Tesla.Middleware.Spandex
 
 Middleware for the [Tesla](https://hexdocs.pm/tesla/readme.html) HTTP client
-library that creates spans using the [Spandex](https://hex.pm/packages/spandex)
-tracing library. Spandex supports Datadog tracing.
+library that supports [Datadog tracing](https://docs.datadoghq.com/tracing/)
+using [Spandex](https://hex.pm/packages/spandex).
+
+It creates a span for the client HTTP call, setting metadata:
+
+```elixir
+[
+    http: [
+    status_code: status_code,
+    method: method,
+    url: url,
+    path: path,
+    query_string: URI.encode_query(query),
+    host: uri.host,
+    port: uri.port,
+    scheme: uri.scheme,
+    ],
+    type: :web,
+    resource: "#{method} #{path}",
+    tags: [
+    span: [kind: "client"]
+    ]
+]
+```
+See https://docs.datadoghq.com/tracing/trace_collection/tracing_naming_convention/
+
 
 ## Installation
 
@@ -20,7 +44,7 @@ end
 
 ## Configuration
 
-Add this middleware to the Tesla configuration for your client.
+Add this middleware as a plug in your client.
 
 ```elixir
 defmodule GitHub do
@@ -35,4 +59,11 @@ defmodule GitHub do
     get("/users/" <> login <> "/repos")
   end
 end
+```
+
+Configure the Spandex tracer in `config/config.exs`:
+
+```elixir
+config :spandex_tesla,
+  tracer: Foo.Tracer
 ```
