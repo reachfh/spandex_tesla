@@ -29,7 +29,6 @@ defmodule SpandexTesla.MixProject do
     ]
   end
 
-  # Run "mix help compile.app" to learn about applications.
   def application do
     [
       extra_applications: [:logger] ++ extra_applications(Mix.env())
@@ -39,11 +38,9 @@ defmodule SpandexTesla.MixProject do
   defp extra_applications(:test), do: [:hackney]
   defp extra_applications(_), do: []
 
-  # Specifies which paths to compile per environment
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
 
-  # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
       {:mix_audit, "~> 2.0", only: [:dev, :test], runtime: false},
