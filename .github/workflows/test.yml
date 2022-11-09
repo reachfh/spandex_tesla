@@ -15,7 +15,7 @@ jobs:
 
     steps:
       - name: Cancel previous runs
-        uses: styfle/cancel-workflow-action@0.5.0
+        uses: styfle/cancel-workflow-action@0.11.0
         with:
           access_token: ${{ github.token }}
 
@@ -41,21 +41,43 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-mix-
 
-      - name: Install dependencies
-        run: |
-          mix local.rebar --force
-          mix local.hex --force
-          mix deps.get
+      - name: Install tools
+        run: mix do local.rebar --force, local.hex --force
 
-      - name: Compile code
-        run: |
-          mix compile --warnings-as-errors
+      - name: Get Elixir deps
+        run: mix deps.get
+
+      - name: Compile
+        run: mix compile --warnings-as-errors
 
       - name: Run tests
         run: mix test
 
-      - name: Run static code analysis tools
-        run: | 
-          mix credo
-          mix deps.audit
-          mix dialyzer --format github
+      - name: Run credo
+        # run: mix credo --mute-exit-status
+        run: mix credo
+
+      - name: Run deps.audit
+        run: mix deps.audit
+
+      - name: Run dialyzer
+        run: mix dialyzer --halt-exit-status --format github
+        # run: mix dialyzer --ignore-exit-status --format github
+
+      - name: Publish unit test results to GitHub
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        # Run even if tests fail
+        if: always()
+        with:
+          junit_files: _build/test/junit-reports/*.xml
+          # junit_files: _build/test/lib/*/*.xml
+
+      # - name: Upload results to Datadog
+      #   if: always()
+      #   continue-on-error: true
+      #   env:
+      #     DD_API_KEY: ${{ secrets.ACTIONS_DD_API_KEY }}
+      #     DD_ENV: ci
+      #   run: |
+      #     npm install -g @datadog/datadog-ci
+      #     datadog-ci junit upload --service api-graphql _build/test/lib/*/test-junit-report.xml
