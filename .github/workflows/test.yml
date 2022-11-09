@@ -75,6 +75,7 @@ jobs:
         with:
           junit_files: _build/test/junit-reports/*.xml
           # junit_files: _build/test/lib/*/*.xml
+          check_name: "Test Results ${{matrix.elixir}} ${{matrix.otp}}"
 
       # - name: Upload results to Datadog
       #   if: always()
