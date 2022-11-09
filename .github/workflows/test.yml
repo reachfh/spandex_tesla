@@ -31,9 +31,8 @@ jobs:
       - name: Check formatting
         run: mix format --check-formatted
 
-      - name: Retrieve cached dependencies
-        id: mix-cache
-        uses: actions/cache@v2
+      - name: Retrieve cached deps
+        uses: actions/cache@v3
         with:
           path: |
             deps
