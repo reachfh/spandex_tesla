@@ -54,4 +54,3 @@ defmodule SpandexTesla.BypassTest do
 
   defp endpoint_url(port), do: "http://localhost:#{port}/"
 end
-

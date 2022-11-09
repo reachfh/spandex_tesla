@@ -53,17 +53,17 @@ defmodule Tesla.Middleware.Spandex do
         tracer.span_error(exception, stacktrace, span_opts)
         reraise exception, stacktrace
     else
-        {:ok, new_env} = result ->
-          span_opts = DeepMerge.deep_merge(get_span_opts(new_env), env.opts[:span_opts] || [])
-          tracer.update_span(span_opts)
+      {:ok, new_env} = result ->
+        span_opts = DeepMerge.deep_merge(get_span_opts(new_env), env.opts[:span_opts] || [])
+        tracer.update_span(span_opts)
 
-          result
+        result
 
-        {:error, _reason} = result ->
-          span_opts = DeepMerge.deep_merge(get_span_opts(env), env.opts[:span_opts] || [])
-          tracer.update_span(span_opts)
+      {:error, _reason} = result ->
+        span_opts = DeepMerge.deep_merge(get_span_opts(env), env.opts[:span_opts] || [])
+        tracer.update_span(span_opts)
 
-          result
+        result
     after
       tracer.finish_span()
     end
@@ -102,10 +102,11 @@ defmodule Tesla.Middleware.Spandex do
     method = format_http_method(method)
     path = uri.path || "/"
 
-    tags = [
-      span: [kind: "client"]
-    ]
-    |> add_content_length(headers)
+    tags =
+      [
+        span: [kind: "client"]
+      ]
+      |> add_content_length(headers)
 
     # These tags come mostly from Spandex.Span, but also includes tags from
     # https://docs.datadoghq.com/tracing/trace_collection/tracing_naming_convention/
@@ -154,14 +155,14 @@ defmodule Tesla.Middleware.Spandex do
         tags
 
       {_key, content_length} ->
-        DeepMerge.deep_merge(tags, [http: [response: [content_length: content_length]]])
+        DeepMerge.deep_merge(tags, http: [response: [content_length: content_length]])
         # Keyword.put(tags, :"http.response.content_length", content_length)
     end
   end
 
   @spec set_status_error(Keyword.t(), Tesla.Env.t()) :: Keyword.t()
   def set_status_error(span_opts, %Tesla.Env{status: status}) when status > 400 do
-    Keyword.put(span_opts, :error, [error?: true])
+    Keyword.put(span_opts, :error, error?: true)
   end
 
   def set_status_error(span_opts, _) do
