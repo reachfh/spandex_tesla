@@ -7,7 +7,7 @@ on:
 name: Test
 jobs:
   test:
-    name: Tests
+    name: Run tests
     runs-on: ubuntu-latest
 
     env:
@@ -19,10 +19,10 @@ jobs:
         with:
           access_token: ${{ github.token }}
 
-      - name: Checkout code
+      - name: Check out source
         uses: actions/checkout@v3
 
-      - name: Setup Elixir
+      - name: Install Elixir
         uses: erlef/setup-beam@v1
         with:
           otp-version: "24.2"
