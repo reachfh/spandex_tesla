@@ -1,4 +1,5 @@
 ![test workflow](https://github.com/reachfh/spandex_tesla/actions/workflows/test.yml/badge.svg)
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
 
 # Tesla.Middleware.Spandex
 
@@ -67,3 +68,7 @@ Configure the Spandex tracer in `config/config.exs`:
 config :spandex_tesla,
   tracer: Foo.Tracer
 ```
+
+## Code of Conduct
+
+This project  Contributor Covenant version 2.1. Check [CODE_OF_CONDUCT.md](/CODE_OF_CONDUCT.md) file for more information.
