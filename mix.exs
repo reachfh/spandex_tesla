@@ -43,16 +43,17 @@ defmodule SpandexTesla.MixProject do
 
   defp deps do
     [
-      {:mix_audit, "~> 2.0", only: [:dev, :test], runtime: false},
-      {:bypass, "~> 2.1", only: :test, runtime: false},
-      {:credo, "~> 1.5", only: [:dev, :test], runtime: false},
-      {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
+      {:bypass, "~> 2.1", only: [:dev, :test], runtime: false},
+      {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
       {:deep_merge, "~> 1.0"},
+      {:dialyxir, "~> 1.2", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.28.0", only: :dev, runtime: false},
-      {:excoveralls, "~> 0.10", only: :test},
-      {:httpoison, "~> 1.8", only: :test, runtime: false},
+      {:excoveralls, "~> 0.14", only: [:dev, :test], runtime: false},
       {:hackney, "~> 1.18", only: [:dev, :test]},
+      {:httpoison, "~> 1.8", only: :test, runtime: false},
       {:jason, "~> 1.3"},
+      {:junit_formatter, "~> 3.3", only: [:dev, :test], runtime: false},
+      {:mix_audit, "~> 2.0", only: [:dev, :test], runtime: false},
       {:spandex, "~> 3.1"},
       # {:spandex_datadog, "~> 1.2"},
       {:tesla, "~> 1.4"}
