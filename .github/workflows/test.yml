@@ -37,12 +37,27 @@ jobs:
 
       - name: Retrieve cached deps
         uses: actions/cache@v3
+
+      - name: Cache deps
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-elixir-deps
         with:
-          path: |
-            deps
-            _build
-          key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
+          path: deps
+          key: ${{ runner.os }}-mix-${{ env.cache-name }}-${{ hashFiles('**/mix.lock') }}
           restore-keys: |
+            ${{ runner.os }}-mix-${{ env.cache-name }}-
+
+      - name: Cache compiled build
+        id: cache-build
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-compiled-build
+        with:
+          path: _build
+          key: ${{ runner.os }}-mix-${{ env.cache-name }}-${{ hashFiles('**/mix.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-mix-${{ env.cache-name }}-
             ${{ runner.os }}-mix-
 
       - name: Install tools
@@ -60,6 +75,9 @@ jobs:
       - name: Run credo
         # run: mix credo --mute-exit-status
         run: mix credo
+
+      - name: Run hex.audit
+        run: mix hex.audit
 
       - name: Run deps.audit
         run: mix deps.audit
