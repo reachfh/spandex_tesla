@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        otp: ['24.3.4.6', '25.1.2']
+        otp: ['24.3.4', '25.1.2']
         elixir: ['1.13.4', '1.14.1']
 
     env:
@@ -34,9 +34,6 @@ jobs:
 
       - name: Check formatting
         run: mix format --check-formatted
-
-      - name: Retrieve cached deps
-        uses: actions/cache@v3
 
       - name: Cache deps
         uses: actions/cache@v3
